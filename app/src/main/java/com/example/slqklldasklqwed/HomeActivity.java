@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -14,6 +15,7 @@ public class HomeActivity extends AppCompatActivity {
 
     DBManager db;
     SharedPreferences prefs;
+    TextView welcomeText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +25,7 @@ public class HomeActivity extends AppCompatActivity {
         // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        welcomeText = findViewById(R.id.welcomeText);
         db = new DBManager(this);
         prefs = getSharedPreferences("MojePrefs", MODE_PRIVATE);
 
@@ -35,7 +37,7 @@ public class HomeActivity extends AppCompatActivity {
                 new String[]{String.valueOf(userId)});
         if(cursor.moveToFirst()){
             String imePrezime = cursor.getString(0);
-            toolbar.setTitle("Dobrodošli nazad, " + imePrezime + "!");
+            welcomeText.setText("Welcome " + imePrezime);
         }
         cursor.close();
     }

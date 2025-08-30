@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -49,6 +51,15 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, "Pogrešni podaci.", Toast.LENGTH_SHORT).show();
             }
         });
+
+        View rootLayout = findViewById(R.id.rootLayout);
+
+//        btnPrijavi.setOnClickListener(v -> {
+//            // Menjaj boju pozadine
+//            rootLayout.setBackgroundColor(Color.RED);
+//
+//            // Ostatak tvoje login logike ide ovde
+//        });
     }
 
     private int proveriKorisnika(String email, String lozinka){
@@ -62,4 +73,9 @@ public class LoginActivity extends AppCompatActivity {
         cursor.close();
         return id;
     }
+
+
+
+
+
 }

@@ -4,16 +4,19 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.core.app.ActivityCompat;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -29,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BeleskeFragment extends Fragment {
+
+    private static final int REQUEST_STORAGE_PERMISSION = 123;
 
     ListView lvBeleske;
     Button btnDodaj, btnFiltriraj;
@@ -58,9 +64,45 @@ public class BeleskeFragment extends Fragment {
             ucitajBeleske(filtrirano);
         });
 
-        btnDodaj.setOnClickListener(v -> otvoriFormuDodajBelesku());
+        btnDodaj.setOnClickListener(v -> {
+            String permission;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Za Android 13 i novije
+                permission = Manifest.permission.READ_MEDIA_IMAGES;
+            } else {
+                // Za Android 12 i starije
+                permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+            }
+
+            if (ContextCompat.checkSelfPermission(getContext(), permission) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{permission}, REQUEST_STORAGE_PERMISSION);
+            } else {
+                otvoriFormuDodajBelesku();
+            }
+        });
 
         return view;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_STORAGE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                otvoriFormuDodajBelesku();
+            } else {
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Greška")
+                        .setMessage("Pristup skladištu nije dozvoljen! Dozvolite pristup u podešavanjima aplikacije.")
+                        .setPositiveButton("OK", null)
+                        .setNegativeButton("Idi u podešavanja", (dialog, which) -> {
+                            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            intent.setData(android.net.Uri.fromParts("package", getContext().getPackageName(), null));
+                            startActivity(intent);
+                        })
+                        .show();
+            }
+        }
     }
 
     private void ucitajBeleske(boolean samoDanas) {
@@ -112,8 +154,6 @@ public class BeleskeFragment extends Fragment {
                             (datePicker.getMonth()+1) + "-" +
                             datePicker.getDayOfMonth();
 
-
-
                     int userId = prefs.getInt("userID", -1);
                     SQLiteDatabase dbWrite = db.getWritableDatabase();
                     ContentValues cv = new ContentValues();
@@ -128,43 +168,4 @@ public class BeleskeFragment extends Fragment {
                 .setNegativeButton("Otkaži", null)
                 .show();
     }
-
-//    private void otvoriFormuDodajBelesku() {
-//        // Kreiramo EditText-eve i DatePicker u istom dialogu
-//        EditText etNaslov = new EditText(getContext());
-//        etNaslov.setHint("Naslov beleške");
-//
-//        EditText etTekst = new EditText(getContext());
-//        etTekst.setHint("Tekst beleške");
-//
-//        DatePicker datePicker = new DatePicker(getContext());
-//
-//        // Kreiramo jednostavan LinearLayout da stavimo sve u jedan dialog
-//        LinearLayout layout = new LinearLayout(getContext());
-//        layout.setOrientation(LinearLayout.VERTICAL);
-//        layout.addView(etNaslov);
-//        layout.addView(etTekst);
-//        layout.addView(datePicker);
-//
-//        // AlertDialog sa “Sačuvaj” i “Otkaži”
-//        new AlertDialog.Builder(getContext())
-//                .setTitle("Dodaj belešku")
-//                .setView(layout)
-//                .setPositiveButton("Sačuvaj", (dialog, which) -> {
-//                    int userId = prefs.getInt("userID", -1);
-//                    SQLiteDatabase dbWrite = db.getWritableDatabase();
-//                    ContentValues cv = new ContentValues();
-//                    cv.put("naslov", etNaslov.getText().toString());
-//                    cv.put("tekst", etTekst.getText().toString());
-//                    cv.put("datum", datePicker.getYear() + "-" + (datePicker.getMonth()+1) + "-" + datePicker.getDayOfMonth());
-//                    cv.put("userId", userId);
-//                    dbWrite.insert("Beleska", null, cv);
-//
-//                    // Osveži listu beleški odmah
-//                    ucitajBeleske(filtrirano);
-//                })
-//                .setNegativeButton("Otkaži", null)
-//                .show();
-//    }
-
 }
